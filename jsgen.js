@@ -187,7 +187,25 @@ var BINARY_OPERATORS = {
     "subtract": "-",
     "multiply": "*",
     "divide": "/",
-    "mod": "%"
+    "mod": "%",
+    "lshift": "<<",
+    "rshift": ">>",
+    "equals": "==",
+    "notequals": "!=",
+    "urshift": ">>>",
+    "lessthan": "<",
+    "lessequal": "<=",
+    "greaterthan": ">",
+    "greaterequal": ">=",
+
+    "bitand": "&",
+    "bitor": "|",
+    "bitxor": "^",
+    "and": "&&",
+    "or": "||",
+
+    "instanceof": "instanceof",
+    "in": "in"
 };
 
 for (var binop in BINARY_OPERATORS) {
