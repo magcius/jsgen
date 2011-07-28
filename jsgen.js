@@ -5,7 +5,9 @@ var code = ["pushglobal"  , null,
             "getproperty" , null,
             "pushstring"  , "log",
             "getproperty" , null,
+            "pushstring"  , "Logging: ",
             "getlocal"    , 0,
+            "add"         , null,
             "call"        , 1];
 
 
@@ -110,6 +112,12 @@ JSGenerator.prototype = {
         return code + " = " + this.generate(ast.value);
     },
 
+    gen_binop: function(ast) {
+        var lhs = this.generate(ast.lhs);
+        var rhs = this.generate(ast.rhs);
+        return "(" + lhs + ast.token + rhs + ")";
+    },
+
     gen_return: function(ast) {
         var rhs = this.generate(ast.value);
         return "return " + rhs + ";";
@@ -173,6 +181,24 @@ var ByteCode = {
         stack.push({ type: "call", lhs: lhs, rhs: rhs });
     }
 };
+
+var BINARY_OPERATORS = {
+    "add": "+",
+    "subtract": "-",
+    "multiply": "*",
+    "divide": "/",
+    "mod": "%"
+};
+
+for (var binop in BINARY_OPERATORS) {
+    ByteCode[binop] = (function(token) {
+        return function(stack, arg) {
+            var rhs = stack.pop();
+            var lhs = stack.pop();
+            stack.push({ type: "binop", token: token, lhs: lhs, rhs: rhs });
+        };
+    })(BINARY_OPERATORS[binop]);
+}
 
 function generate(name, code, nlocals) {
     var n = code.length, stack = [], i, local = [];
