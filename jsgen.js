@@ -5,7 +5,7 @@ var code = ["pushglobal"  , null,
             "getproperty" , null,
             "pushstring"  , "log",
             "getproperty" , null,
-            "pushstring"  , "Hello, World!",
+            "getlocal"    , 0,
             "call"        , 1];
 
 
@@ -53,7 +53,7 @@ var AST = {
 
     Local: function(idx) {
         return { type: "local",
-                 code: "n" + idx };
+                 code: "_L" + idx };
     },
 
     Return: function(obj) {
@@ -113,12 +113,14 @@ var ByteCode = {
     }
 };
 
-function generate(code) {
-    var n = code.length, stack = [], buffer = "";
+function generate(name, code, nlocals) {
+    var n = code.length, stack = [], buffer = "", i, local = [];
+    for (i = 0; i < nlocals; i ++)
+        local.push("_L" + i);
 
     // Standard prologue.
-    buffer += "function _generated() {\n";
-    for (var i = 0; i < n; i += 2) {
+    buffer += "function " + name + "(" + local.join(", ") + ") {\n";
+    for (i = 0; i < n; i += 2) {
         var name = code[i], arg = code[i+1];
         if (ByteCode.hasOwnProperty(name))
             ByteCode[name](stack, arg);
