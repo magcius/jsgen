@@ -2,6 +2,7 @@
 <html>
   <head>
     <script src="jsgen.js"></script>
+    <script src="bytecode.js"></script>
     <style>
       code {
       white-space: pre;
@@ -11,25 +12,31 @@
       padding-left: 1em;
       }
     </style>
+
+    <script id="sample-bytecode" type="text/plain">
+      ["pushglobal" , null,
+      "pushstring"  , "console",
+      "getproperty" , null,
+      "pushstring"  , "log",
+      "getproperty" , null,
+      "pushstring"  , "Logging: ",
+      "getlocal"    , 0,
+      "add"         , null,
+      "call"        , 1]
+    </script>
   </head>
   <body>
     <h1>JSGEN</h1>
     From: 
-    <code>var code = ["pushglobal"   , null,
-            "pushstring"  , "console",
-            "getproperty" , null,
-            "pushstring"  , "log",
-            "getproperty" , null,
-            "pushstring"  , "Logging: ",
-            "getlocal"    , 0,
-            "add"         , null,
-            "call"        , 1];
-</code>
+    <code id="raw"></code>
     comes:
     <code id="generated"></code>
     <script>
-      var newcode = generate("logThing", code, 1);
-      document.getElementById("generated").appendChild(document.createTextNode(newcode));
+      var code = document.getElementById("sample-bytecode").innerHTML;
+      var jscode = generate("logThing", JSON.parse(code), 1);
+
+      document.getElementById("raw").appendChild(document.createTextNode(code));
+      document.getElementById("generated").appendChild(document.createTextNode(jscode));
     </script>
   </body>
 </html>
