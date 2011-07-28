@@ -118,6 +118,11 @@ JSGenerator.prototype = {
         return "(" + lhs + ast.token + rhs + ")";
     },
 
+    gen_unaryop: function(ast) {
+        var rhs = this.generate(ast.rhs);
+        return "(" + ast.token + rhs + ")";
+    },
+
     gen_return: function(ast) {
         var rhs = this.generate(ast.value);
         return "return " + rhs + ";";
@@ -216,6 +221,22 @@ for (var binop in BINARY_OPERATORS) {
             stack.push({ type: "binop", token: token, lhs: lhs, rhs: rhs });
         };
     })(BINARY_OPERATORS[binop]);
+}
+
+var UNARY_OPERATORS = {
+    "not": "!",
+    "bitnot": "~",
+    "increment": "++",
+    "decrement": "--",
+};
+
+for (var unaryop in UNARY_OPERATORS) {
+    ByteCode[unaryop] = (function(token) {
+        return function(stack, arg) {
+            var rhs = stack.pop();
+            stack.push({ type: "unaryop", token: token, rhs: rhs });
+        };
+    })(UNARY_OPERATORS[unaryop]);
 }
 
 function generate(name, code, nlocals) {
