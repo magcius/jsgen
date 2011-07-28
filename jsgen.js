@@ -125,7 +125,12 @@ JSGenerator.prototype = {
 
     gen_return: function(ast) {
         var rhs = this.generate(ast.value);
-        return "return " + rhs + ";";
+        return "return " + rhs;
+    },
+
+    gen_throw: function(ast) {
+        var rhs = this.generate(ast.value);
+        return "throw " + rhs;
     }
 };
 
@@ -184,6 +189,16 @@ var ByteCode = {
             var lhs = stack.pop();
         }
         stack.push({ type: "call", lhs: lhs, rhs: rhs });
+    },
+
+    "return": function(stack, arg) {
+        var value = stack.pop();
+        stack.push({ type: "return", value: value });
+    },
+
+    "throw": function(stack, arg) {
+        var value = stack.pop();
+        stack.push({ type: "throw", value: value });
     }
 };
 
