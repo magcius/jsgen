@@ -71,16 +71,17 @@ JSGenerator.prototype = {
         return lhs + "(" + rhs + ")";
     },
 
-    gen_getlocal: function(ast) {
-        return "(" + ast.name + ")";
+    gen_get: function(ast) {
+        return this.generate(ast.id);
     },
 
-    gen_setlocal: function(ast) {
+    gen_set: function(ast) {
+        var lhs = this.generate(ast.id);
         var rhs = this.generate(ast.value);
-        return ast.name + " = " + rhs;
+        return lhs + " = " + rhs;
     },
 
-    gen_getprop: function(ast) {
+    gen_prop: function(ast) {
         var lhs = this.generate(ast.obj);
         // Special case: a["b"] == a.b, so optimize for a FQN.
         if (ast.name.type == "string")
@@ -88,12 +89,6 @@ JSGenerator.prototype = {
 
         var rhs = this.generate(ast.name);
         return lhs + "[" + rhs + "]";
-    },
-
-    gen_setprop: function(ast) {
-        // Piggyback off of getprop.
-        var code = this.gen_getprop(ast);
-        return code + " = " + this.generate(ast.value);
     },
 
     gen_binop: function(ast) {

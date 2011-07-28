@@ -4,7 +4,7 @@
 /************************************************************/
 
 function makeLocal(idx) {
-    return "_N" + idx;
+    return { type: "identifier", value: "_N" + idx };
 }
 
 var ByteCode = {
@@ -21,25 +21,28 @@ var ByteCode = {
     },
 
     getlocal: function(stack, arg) {
-        stack.push({ type: "getlocal", name: makeLocal(arg) });
+        stack.push({ type: "get", id: makeLocal(arg) });
     },
 
     setlocal: function(stack, arg) {
         var value = stack.pop();
-        stack.push({ type: "setlocal", name: makeLocal(arg), value: value });
+        stack.push({ type: "set", id: makeLocal(arg), value: value });
     },
 
     getproperty: function(stack, arg) {
+        // obj.name
         var name = stack.pop();
         var obj = stack.pop();
-        stack.push({ type: "getprop", obj: obj, name: name });
+        stack.push({ type: "get", id: { type: "prop", obj: obj, name: name }});
     },
 
     setproperty: function(stack, arg) {
+        // obj[name] = value
+        // obj.name = value
         var value = stack.pop();
         var name = stack.pop();
         var obj = stack.pop();
-        stack.push({ type: "setprop", obj: obj, name: name, value: value });
+        stack.push({ type: "set", id: { type: "prop", obj: obj, name: name }, value: value });
     },
  
     call: function(stack, arg) {
@@ -126,7 +129,7 @@ for (var unaryop in UNARY_OPERATORS) {
 function generate(name, code, nlocals) {
     var n = code.length, stack = [], i, local = [];
     for (i = 0; i < nlocals; i ++)
-        local.push({ type: "identifier", value: makeLocal(i) });
+        local.push(makeLocal(i));
 
     for (i = 0; i < n; i += 2) {
         var bname = code[i], arg = code[i+1];
