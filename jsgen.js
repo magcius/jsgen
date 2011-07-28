@@ -10,62 +10,110 @@ var code = ["pushglobal"  , null,
 
 
 /************************************************************/
-/** AST **/
+/**** JS GENERATOR & AST ****/
 /************************************************************/
 
-var AST = {
-    WindowConstant: function() {
-        return { type: "window",
-                 code: "window" };
+function makeLocal(idx) {
+    return "_N" + idx;
+}
+
+function JSGenerator() {
+    this.buffer = "";
+    this.tabs = "";
+}
+
+JSGenerator.prototype = {
+    indent: function() {
+        this.tabs += "\t";
     },
 
-    StringConstant: function(value) {
-        return { type: "string",
-                 raw_value: value,
-                 code: '"' + (value.replace(/"/g, "\\\"")) + '"' };
+    outdent: function() {
+        this.tabs = this.tabs.slice(1);
     },
 
-    IntConstant: function(value) {
-        return { type: "string",
-                 raw_value: value,
-                 code: value.toString() };
+    generate: function(ast) {
+        if (ast === null)
+            return "";
+
+        var func = JSGenerator.prototype["gen_" + ast.type];
+        var ret = func.call(this, ast);
+        return ret;
     },
 
-    GetProperty: function(obj, name) {
-        var code;
-        if (name.type == "string") { // QName
-            code = obj.code + "." + name.raw_value;
-        } else {
-            code = obj.code + "[" + name.code + "]";
-        }
+    gen_function: function(ast) {
+        var name = this.generate(ast.name);
+        var local = this.generate(ast.locals);
+        var block = this.generate(ast.block);
 
-        return { type: "getprop",
-                 code: code };
+        return this.tabs + "function " + name + "(" + local + ") " + block;
     },
 
-    SetProperty: function(obj, name, value) {
-        // Piggyback onto GetProperty.
-        var code = AST.GetProperty(obj, name).code;
-        code += " = " + value.code;
-        return { type: "setprop",
-                 code: code };
+    gen_statement: function(ast) {
+        return this.tabs + this.generate(ast.subexpr) + ";";
     },
 
-    Local: function(idx) {
-        return { type: "local",
-                 code: "_L" + idx };
+    gen_block: function(ast) {
+        var buffer = this.tabs + "{\n";
+        this.indent();
+        buffer += ast.statements.map(this.generate, this).join("\n");
+        this.outdent();
+        buffer += "\n" + this.tabs + "}\n";
+        return buffer;
     },
 
-    Return: function(obj) {
-        return { type: "return",
-                 code: "return " + obj.code + ";" };
+    gen_commalist: function(ast) {
+        return ast.values.map(this.generate, this).join(", ");
     },
 
-    Call: function(obj, args) {
-        var arg_str = args.map(function(v) { return v.code; }).join(", ");
-        return { type: "call",
-                 code: obj.code + "(" + arg_str + ")" };
+    gen_string: function(ast) {
+        // Quotes a string: a"b => "a\"b"
+        var qstr = ast.value.replace(/"/g, "\\\"");
+        return '"' + qstr + '"';
     },
+
+    gen_number: function(ast) {
+        return ast.value.toFixed();
+    },
+
+    gen_identifier: function(ast) {
+        return ast.value;
+    },
+
+    gen_call: function(ast) {
+        var lhs = this.generate(ast.lhs);
+        var rhs = this.generate(ast.rhs);
+        return lhs + "(" + rhs + ")";
+    },
+
+    gen_getlocal: function(ast) {
+        return makeLocal(ast.idx);
+    },
+
+    gen_setlocal: function(ast) {
+        var rhs = this.generate(ast.value);
+        return makeLocal(ast.idx) + " = " + rhs;
+    },
+
+    gen_getprop: function(ast) {
+        var lhs = this.generate(ast.obj);
+        // Special case: a["b"] == a.b, so optimize for a FQN.
+        if (ast.name.type == "string")
+            return lhs + "." + ast.name.value;
+
+        var rhs = this.generate(ast.name);
+        return lhs + "[" + rhs + "]";
+    },
+
+    gen_setprop: function(ast) {
+        // Piggyback off of getprop.
+        var code = this.gen_getprop(ast);
+        return code + " = " + this.generate(ast.value);
+    },
+
+    gen_return: function(ast) {
+        var rhs = this.generate(ast.value);
+        return "return " + rhs + ";";
+    }
 };
 
 /************************************************************/
@@ -74,63 +122,78 @@ var AST = {
 
 var ByteCode = {
     pushstring: function(stack, arg) {
-        stack.push(AST.StringConstant(arg));
+        stack.push({ type: "string", value: arg });
     },
 
-    pushint: function(stack, arg) {
-        stack.push(AST.IntConstant(arg));
+    pushnumber: function(stack, arg) {
+        stack.push({ type: "number", value: arg });
     },
 
     pushglobal: function(stack, arg) {
-        stack.push(AST.WindowConstant());
+        stack.push({ type: "identifier", value: "window" });
     },
 
     getlocal: function(stack, arg) {
-        stack.push(AST.Local(arg));
+        stack.push({ type: "getlocal", idx: arg });
+    },
+
+    setlocal: function(stack, arg) {
+        var value = stack.pop();
+        stack.push({ type: "setlocal", idx: arg, value: value });
     },
 
     getproperty: function(stack, arg) {
         var name = stack.pop();
         var obj = stack.pop();
-        stack.push(AST.GetProperty(obj, name));
+        stack.push({ type: "getprop", obj: obj, name: name });
+    },
+
+    setproperty: function(stack, arg) {
+        var value = stack.pop();
+        var name = stack.pop();
+        var obj = stack.pop();
+        stack.push({ type: "setprop", obj: obj, name: name, value: value });
     },
  
     call: function(stack, arg) {
-        var call_args = [];
-        while (arg --)
-            call_args.unshift(stack.pop());
-        var callable = stack.pop();
-        stack.push(AST.Call(callable, call_args));
-    },
-
-    dup: function(stack, arg) {
-        var obj = stack[stack.length-1];
-        stack,push(obj);
-    },
-
-    pop: function(stack, arg) {
-        stack.pop();
+        var lhs, rhs;
+        if (arg == 0) {
+            lhs = stack.pop();
+            rhs = null;
+        } else if (arg == 1) {
+            rhs = stack.pop();
+            lhs = stack.pop();
+        } else {
+            var values = [];
+            while (arg --)
+                values.unshift(stack.pop());
+            var rhs = { type: "commalist", values: values };
+            var lhs = stack.pop();
+        }
+        stack.push({ type: "call", lhs: lhs, rhs: rhs });
     }
 };
 
 function generate(name, code, nlocals) {
-    var n = code.length, stack = [], buffer = "", i, local = [];
+    var n = code.length, stack = [], i, local = [];
     for (i = 0; i < nlocals; i ++)
-        local.push("_L" + i);
+        local.push({ type: "identifier", value: makeLocal(i) });
 
-    // Standard prologue.
-    buffer += "function " + name + "(" + local.join(", ") + ") {\n";
     for (i = 0; i < n; i += 2) {
-        var name = code[i], arg = code[i+1];
-        if (ByteCode.hasOwnProperty(name))
-            ByteCode[name](stack, arg);
+        var bname = code[i], arg = code[i+1];
+        if (ByteCode.hasOwnProperty(bname))
+            ByteCode[bname](stack, arg);
     }
 
-    n = stack.length;
-    while (n --)
-        buffer += stack.pop().code + ";\n";
+    var statements = [];
 
-    // Epilogue.
-    buffer += "}";
-    return buffer;
+    while (stack.length)
+        statements.push({ type: "statement", subexpr: stack.pop() });
+
+    var func = { type: "function",
+                 name: { type: "identifier", value: name },
+                 locals: { type: "commalist", values: local },
+                 block: { type: "block", statements: statements }};
+
+    return new JSGenerator().generate(func);
 }
