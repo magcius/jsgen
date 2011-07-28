@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="jsgen.js"></script>
+    <style>
+      code {
+      white-space: pre;
+      display: block;
+      margin: 2em;
+      border-left: 1px solid #ddd;
+      padding-left: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>JSGEN</h1>
+    From: 
+    <code>var code = ["pushglobal"   , null,
+            "pushstring"  , "console",
+            "getproperty" , null,
+            "pushstring"  , "log",
+            "getproperty" , null,
+            "pushstring"  , "Hello, World!",
+            "call"        , 1];
+</code>
+    comes:
+    <code id="generated"></code>
+    <script>
+      var newcode = generate(code);
+      document.getElementById("generated").appendChild(document.createTextNode(newcode));
+    </script>
+  </body>
+</html>
