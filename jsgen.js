@@ -121,6 +121,9 @@ JSGenerator.prototype = {
     },
 
     gen_return: function(ast) {
+        if (ast.value == null)
+            return "return";
+
         var rhs = this.generate(ast.value);
         return "return " + rhs;
     },

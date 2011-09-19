@@ -123,8 +123,7 @@ var ABC = {
     },
 
     returnvoid: function(ctx) {
-        ABC.pushundefined(ctx);
-        ABC.returnvalue(ctx);
+        ctx.statements.push({ type: "return", value: null });
     },
 
     "throw": function(ctx) {
