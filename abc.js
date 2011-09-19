@@ -107,14 +107,14 @@ var ABC = {
     call: function(ctx, arg) {
         var rhs = ABC.format_arglist(ctx, arg);
         var lhs = ctx.stack.pop();
-        ctx.statements.push({ type: "call", lhs: lhs, rhs: rhs });
+        ctx.stack.push({ type: "call", lhs: lhs, rhs: rhs });
     },
 
     callproperty: function(ctx, name, arg) {
         var rhs = ABC.format_arglist(ctx, arg);
         var callee = ctx.stack.pop();
         var lhs = { type: "get", id: { type: "prop", obj: callee, name: makeIdentifier(name) }};
-        ctx.statements.push({ type: "call", lhs: lhs, rhs: rhs });
+        ctx.stack.push({ type: "call", lhs: lhs, rhs: rhs });
     },
 
     returnvalue: function(ctx) {
