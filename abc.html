@@ -13,7 +13,7 @@
       }
     </style>
 
-    <script id="sample-bytecode" type="text/plain">
+    <script type="text/abc" funcname="thingOne" argcount="0">
       [
       "newobject"   , [0],
       "setlocal"    , [1],
@@ -31,19 +31,53 @@
       "setproperty" , ["three"]
       ]
     </script>
+
+    <script type="text/abc" funcname="thingTwo" argcount="0">
+      [
+      "pushglobal"  , [0],
+      "getproperty" , ["console"],
+      "getproperty" , ["log"],
+      "pushstring"  , ["One!"],
+      "pushstring"  , ["Two!"],
+      "pushstring"  , ["Three!"],
+      "call"        , [3]
+      ]
+    </script>
   </head>
   <body>
     <h1>JSGEN</h1>
-    From: 
-    <code id="raw"></code>
-    comes:
-    <code id="generated"></code>
+    <div id="out"></div>
     <script>
-      var code = document.getElementById("sample-bytecode").innerHTML;
-      var jscode = generate("logThing", JSON.parse(code), 0);
+      var scripts = document.querySelectorAll('script[type="text/abc"]');
 
-      document.getElementById("raw").appendChild(document.createTextNode(code));
-      document.getElementById("generated").appendChild(document.createTextNode(jscode));
+      function writeToOut(fn, raw, js) {
+        var out = document.getElementById("out");
+
+        var head = document.createElement("h2");
+        head.appendChild(document.createTextNode(fn));
+        out.appendChild(head);
+
+        out.appendChild(document.createTextNode("Raw: "));
+        var rawcode = document.createElement("code");
+        rawcode.appendChild(document.createTextNode(raw));
+        out.appendChild(rawcode);
+
+        out.appendChild(document.createTextNode("JS: "));
+        var jscode = document.createElement("code");
+        jscode.appendChild(document.createTextNode(js));
+        out.appendChild(jscode);
+      }
+
+      for (var i = 0; i < scripts.length; i ++) {
+        var script = scripts[i];
+        var fn = script.getAttribute("funcname");
+        var args = script.getAttribute("argcount");
+
+        var raw = script.innerHTML;
+        var js = generate(fn, JSON.parse(raw), args);
+
+        writeToOut(fn, raw, js);
+      }
     </script>
   </body>
 </html>
