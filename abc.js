@@ -217,9 +217,11 @@ function generate(name, code, nargs) {
         if (i > nargs)
             locals.push(makeLocal(i));
 
-    var prologue = { type: "var_declaration",
-                     values: locals };
-    statements.unshift(prologue);
+    if (locals.length) {
+        var prologue = { type: "var_declaration",
+                         values: locals };
+        statements.unshift(prologue);
+    }
 
     n = statements.length;
     for (i = 0; i < n; i ++) {
