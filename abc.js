@@ -178,7 +178,7 @@ var UNARY_OPERATORS = {
     "increment": "++",
     "decrement": "--",
     "increment_i": "++",
-    "decrement_i": "--",
+    "decrement_i": "--"
 };
 
 for (var unaryop in UNARY_OPERATORS) {
