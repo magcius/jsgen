@@ -89,26 +89,31 @@ var ABC = {
                               id: { type: "prop", obj: obj, name: makeIdentifier(name) },
                               value: value });
     },
- 
-    findproperty: function(ctx, name) {
-        ctx.statements.pop();
-    },
 
-    call: function(ctx, arg) {
+    format_arglist: function(ctx, arg) {
         var lhs, rhs;
         if (arg == 0) {
-            lhs = ctx.stack.pop();
-            rhs = null;
+            return null;
         } else if (arg == 1) {
-            rhs = ctx.stack.pop();
-            lhs = ctx.stack.pop();
+            return ctx.stack.pop();
         } else {
             var values = [];
             while (arg --)
                 values.unshift(ctx.stack.pop());
-            var rhs = { type: "commalist", values: values };
-            var lhs = ctx.stack.pop();
+            return { type: "commalist", values: values };
         }
+    },
+
+    call: function(ctx, arg) {
+        var rhs = ABC.format_arglist(ctx, arg);
+        var lhs = ctx.stack.pop();
+        ctx.statements.push({ type: "call", lhs: lhs, rhs: rhs });
+    },
+
+    callproperty: function(ctx, name, arg) {
+        var rhs = ABC.format_arglist(ctx, arg);
+        var callee = ctx.stack.pop();
+        var lhs = { type: "get", id: { type: "prop", obj: callee, name: makeIdentifier(name) }};
         ctx.statements.push({ type: "call", lhs: lhs, rhs: rhs });
     },
 

@@ -34,13 +34,12 @@
 
     <script type="text/abc" funcname="thingTwo" argcount="0">
       [
-      "pushglobal"  , [0],
-      "getproperty" , ["console"],
-      "getproperty" , ["log"],
-      "pushstring"  , ["One!"],
-      "pushstring"  , ["Two!"],
-      "pushstring"  , ["Three!"],
-      "call"        , [3]
+      "pushglobal"   , [0],
+      "getproperty"  , ["console"],
+      "pushstring"   , ["One!"],
+      "pushstring"   , ["Two!"],
+      "pushstring"   , ["Three!"],
+      "callproperty" , ["log", 3]
       ]
     </script>
   </head>
