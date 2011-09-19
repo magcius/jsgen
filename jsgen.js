@@ -38,6 +38,14 @@ JSGenerator.prototype = {
         return this.tabs + this.generate(ast.subexpr) + ";";
     },
 
+    gen_object_literal: function(ast) {
+        return JSON.stringify(ast.object);
+    },
+
+    gen_array_literal: function(ast) {
+        return JSON.stringify(ast.array);
+    },
+
     gen_block: function(ast) {
         var buffer = this.tabs + "{\n";
         this.indent();
@@ -81,10 +89,14 @@ JSGenerator.prototype = {
         return lhs + " = " + rhs;
     },
 
+    gen_var_declaration: function(ast) {
+        return "var " + this.gen_commalist({ values: ast.values });
+    },
+
     gen_prop: function(ast) {
         var lhs = this.generate(ast.obj);
         // Special case: a["b"] == a.b, so optimize for a FQN.
-        if (ast.name.type == "string")
+        if (ast.name.type == "identifier")
             return lhs + "." + ast.name.value;
 
         var rhs = this.generate(ast.name);
@@ -94,6 +106,12 @@ JSGenerator.prototype = {
     gen_binop: function(ast) {
         var lhs = this.generate(ast.lhs);
         var rhs = this.generate(ast.rhs);
+
+        // Simple constant folding
+        if (parseFloat(lhs) && parseFloat(rhs)) {
+            var func = new Function(["a", "b"], "return a " + ast.token + " b;");
+            return func(parseFloat(lhs), parseFloat(rhs)).toString();
+        }
         return "(" + lhs + ast.token + rhs + ")";
     },
 

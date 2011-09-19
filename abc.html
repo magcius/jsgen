@@ -2,7 +2,7 @@
 <html>
   <head>
     <script src="jsgen.js"></script>
-    <script src="bytecode.js"></script>
+    <script src="abc.js"></script>
     <style>
       code {
       white-space: pre;
@@ -14,15 +14,22 @@
     </style>
 
     <script id="sample-bytecode" type="text/plain">
-      ["pushglobal" , null,
-      "pushstring"  , "console",
-      "getproperty" , null,
-      "pushstring"  , "log",
-      "getproperty" , null,
-      "pushstring"  , "Logging: ",
-      "getlocal"    , 0,
-      "add"         , null,
-      "call"        , 1]
+      [
+      "newobject"   , [0],
+      "setlocal"    , [1],
+      "getlocal"    , [1],
+      "pushstring"  , ["thing.xml"],
+      "setproperty" , ["file"],
+      "getlocal"    , [1],
+      "pushstring"  , ["value"],
+      "setproperty" , ["key"],
+
+      "getlocal"    , [1],
+      "pushbyte"    , [3],
+      "pushbyte"    , [6],
+      "add"         , [],
+      "setproperty" , ["three"]
+      ]
     </script>
   </head>
   <body>
@@ -33,7 +40,7 @@
     <code id="generated"></code>
     <script>
       var code = document.getElementById("sample-bytecode").innerHTML;
-      var jscode = generate("logThing", JSON.parse(code), 1);
+      var jscode = generate("logThing", JSON.parse(code), 0);
 
       document.getElementById("raw").appendChild(document.createTextNode(code));
       document.getElementById("generated").appendChild(document.createTextNode(jscode));
